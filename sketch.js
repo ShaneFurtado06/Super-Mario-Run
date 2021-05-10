@@ -1,5 +1,5 @@
 //Super Mario Run
-var gameState=2;
+var gameState=-1;
 
 var donkeykong,donkeyKongA;
 var backI,back;
@@ -24,6 +24,7 @@ function preload(){
   sound=loadSound("sound.mp3");
 
   //Images
+  enemyI=loadImage("enemy.png");
   backI=loadImage(" background.jpg");
   groundI=loadImage(" ground.jpg");
   cloudI=loadImage(" cloud.png");
@@ -36,12 +37,13 @@ function preload(){
 
 function setup(){
   createCanvas(window.innerWidth,window.innerHeight); 
-  sound.play();
+  sound.loop();
  
   //Groups
   cloudG=createGroup();
   coinG=createGroup();
   bridgeG=createGroup();
+  enemyG=createGroup();
   
   //background
   back=createSprite(90,60,800,800);
@@ -80,12 +82,12 @@ function setup(){
   donkeykong.scale=0.9;
   
   //sonic image
-  sonic=createSprite(50,414,50,50);
+  sonic=createSprite(250,414,50,50);
   sonic.addAnimation("character1_sonic",sonicA);
   sonic.scale=0.9;
   
   //luigi image
-  luigi=createSprite(150,395,50,50);
+  luigi=createSprite(250,395,50,50);
   luigi.addAnimation("character2_luigi",luigiA);
   luigi.scale=0.28;
   
@@ -96,11 +98,37 @@ function setup(){
 }
 
 function draw(){
-  background("white");
+  background("background.jpg");
+  console.log(gameState);
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  //Character Choose State
+  //very first screen
   if(gameState===-1){
+    mario.visible=false;
+    luigi.visible=false;
+    sonic.visible=false;
+
+    restart.visible=false;
+
+    gameName.visible=true;
+    gameName.x=window.innerWidth/2-50;
+    gameName.y=window.innerHeight*0+340;
+    gameName.scale=0.7;
+
+    next.visible=true;
+    next.scale=0.2;
+    if(mousePressedOver(next)){
+      gameState=0;
+      next.destroy();
+    }
+  }
+  //Character Choose State
+  if(gameState===0){
+
+    mario.visible=true;
+    sonic.visible=true;
+    luigi.visible=true;
+
     //text
     fill ("black");
     textSize(40);
@@ -112,45 +140,58 @@ function draw(){
     gameName.y=window.innerHeight*0+80;
     gameName.scale=0.3;
 
-    next.visible=true;
+    next.visible=false;
     next.scale=0.2;
+
+    restart.visible=false;
 
     //character pos
     sonic.x=window.innerWidth*0+130;
     sonic.scale=1.4;
+    sonic.velocityY=0;
 
     luigi.x=window.innerWidth/2-20;
     luigi.scale=0.4;
+    luigi.velocityY=0;
 
     mario.x=window.innerWidth-200;
     mario.scale=3;
+    mario.velocityY=0;
+    
+    if(mousePressedOver(mario)){
+      gameState=1;
+      sonic.visible=false;
+      luigi.visible=false;
+      sonic.x=200;
+      luigi.x=sonic.x;
+      mario.x=displayWidth*0+200;
+    }
+    if(mousePressedOver(luigi)){
+      gameState=1;
+      mario.visible=false;
+      sonic.visible=false;
+      mario.x=200;
+      sonic.x=mario.x;
+      luigi.x=displayWidth*0+200;
+    }
+    if(mousePressedOver(sonic)){
+      gameState=1;
+      mario.visible=false;
+      luigi.visible=false;
+      mario.x=200;
+      luigi.x=mario.x;
+      sonic.x=displayWidth*0+200;
+    }
     
   }
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  //Before Play State
-  if(gameState===0){
-    //gameName
-    gameName.visible=true;
-    gameName.x=window.innerWidth/2-10;
-    gameName.y=window.innerHeight/2-30;
-    gameName.scale=0.7;
-
-    //visible
-    back.visible=true;
-    sonic.visible=false;
-    mario.visible=false;
-    luigi.visible=false;
-
-    //play button
-    next.visible=true;
-    next.scale=0.2;
-  }
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+sonic.collide(invisibleGround)
+mario.collide(invisibleGround)
+luigi.collide(invisibleGround)
 
   //Play State
   if(gameState===1){
-    
+    background(rgb(135,206,235));
     gameName.visible=false;
 
     //scale
@@ -159,13 +200,13 @@ function draw(){
     mario.scale=2;
         
     //ground movement
-    ground.velocityX=-4;
+    ground.velocityX=-8;
     if(ground.x<-5){
       ground.x=window.innerWidth+50;
     }
-    /*if(frameCount%100===0){
-      ground.velocityX=ground.velocityX-44;
-    }*/
+    if(frameCount%100===0){
+      ground.velocityX=ground.velocityX-4;
+    }
     
     //character jump
     //sonic
@@ -173,7 +214,6 @@ function draw(){
         sonic.y = sonic.y-50;
     }    
     //add gravity
-    sonic.collide(invisibleGround)
     sonic.velocityY = sonic.velocityY + 2.8;
     //prevent fall
     if(sonic.y>invisibleGround.y){
@@ -185,7 +225,6 @@ function draw(){
         mario.y = mario.y-50;
     }    
     //add gravity
-    mario.collide(invisibleGround)
     mario.velocityY = mario.velocityY + 2.8;
     //prevent fall
     if(mario.y>invisibleGround.y){
@@ -197,7 +236,6 @@ function draw(){
         luigi.y = luigi.y-50;
     }    
     //add gravity
-    luigi.collide(invisibleGround)
     luigi.velocityY = luigi.velocityY + 2.8;
     //prevent fall
     if(luigi.y>invisibleGround.y){
@@ -210,24 +248,53 @@ function draw(){
     gameName.y=window.innerHeight*0+80;
     gameName.scale=0.3;
 
-    
+    //bridge
+    if(bridgeG.isTouching(mario)){
+      mario.velocityY=0;
+    }  
+    if(bridgeG.isTouching(luigi)){
+      luigi.velocityY=0;
+    }  
+    if(bridgeG.isTouching(sonic)){
+      sonic.velocityY=0;
+    }    
     
     //score
     if(frameCount%2===0){score++}  
 
+    if(enemyG.isTouching(mario)||enemyG.isTouching(luigi)||enemyG.isTouching(sonic)){
+      gameState=2;
+      ground.velocityX=0;
+      coinG.destroyEach();
+      enemyG.destroyEach();
+      cloudG.destroyEach();
+      bridgeG.destroyEach();
+    }
+
+    restart.visible=false;
+
     spawnClouds();
     spawnBridges();
     spawnCoins();
+    spawnEnemy();
   }  
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   //End State
   if(gameState===2){
     //visible
-    back.visible=false;
     mario.visible=false;
     sonic.visible=false;
     luigi.visible=false;
+
+    restart.visible=true;
+
+    if(mousePressedOver(restart)){
+      gameState=-1;
+      restart.visible=false;
+      Point=0;
+      score=0;
+    }
 
     //gameName
     gameName.visible=true;
@@ -259,7 +326,7 @@ function spawnClouds(){
     cloud.y = Math.round(random(window.innerHeight*0+50,window.innerHeight*0+280));
     cloud.addImage(cloudI);
     cloud.velocityX=ground.velocityX;
-    cloud.lifetime=500;
+    cloud.lifetime=550;
     cloud.scale=0.15;
     cloudG.add(cloud);
 
@@ -281,7 +348,7 @@ function spawnCoins(){
     coin=createSprite(window.innerWidth+20,window.innerHeight/2+160,40,40);
     coin.addImage(coinI);
     coin.velocityX=ground.velocityX;
-    coin.lifetime=500;
+    coin.lifetime=550;
     coin.scale=0.08;
     coinG.add(coin);
     
@@ -295,8 +362,8 @@ function spawnCoins(){
     coin.depth=coin.depth-1;
 
     //point increase
-    if(sonic.isTouching(coin)||mario.isTouching(coin)||luigi.isTouching(coin)){
-      coin.destroyEach();
+    if(coinG.isTouching(sonic)||coinG.isTouching(mario)||coinG.isTouching(luigi)){
+      coinG.destroyEach();
       Point++;
     }
   }
@@ -304,7 +371,7 @@ function spawnCoins(){
     coinZ=createSprite(window.innerWidth+20,window.innerHeight/2+210,40,40);
     coinZ.addImage(coinI);
     coinZ.velocityX=ground.velocityX;
-    coinZ.lifetime=500;
+    coinZ.lifetime=550;
     coinZ.scale=0.08;
     coinG.add(coinZ);
 
@@ -332,30 +399,31 @@ function spawnBridges(){
     bridge=createSprite(window.innerWidth+500,window.innerHeight/2+40,400,40);
     bridge.addImage(bridgeI);
     bridge.velocityX=ground.velocityX;
-    bridge.lifetime=500;
+    bridge.lifetime=600;
     bridge.scale=0.4;
+    bridgeG.add(bridge);
+    bridge.debug=true;
+    bridge.setCollider("rectangle",0,-100,800,100);
     
-    bridgeIn=createSprite(window.innerWidth+500,window.innerHeight/2+40,800,200);
+    /*bridgeIn=createSprite(window.innerWidth+500,window.innerHeight/2+40,800,200);
     bridgeIn.velocityX=ground.velocityX;
     bridgeIn.lifetime=500;
     //bridgeI.visible=false;
     bridgeIn.scale=0.4;
-    bridgeIn.debug=true;
-
-    //bridgeG.add(bridgeIn);
-    bridgeG.add(bridgeIn);  
-
-    if(bridgeG.isTouching(mario)){
-      mario.velocityY=0;
-    }
-    bridgeG.collide(mario);
-    sonic.collide(bridgeG);
-    luigi.collide(bridgeG);
+    bridgeIn.debug=true;*/
+ 
   }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Enemy
 function spawnEnemy(){
-  
+ if(frameCount%100===0&&frameCount%250!=0){
+   enemy=createSprite(window.innerWidth+500,window.innerHeight-90,80,80);
+   enemy.velocityX=ground.velocityX-1;
+   enemy.lifetime=500;
+   enemy.scale=0.04;
+   enemy.addImage(enemyI);
+   enemyG.add(enemy);
+ } 
 }
